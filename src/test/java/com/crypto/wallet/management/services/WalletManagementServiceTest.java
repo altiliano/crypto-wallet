@@ -64,14 +64,6 @@ class WalletManagementServiceTest {
         assertEquals(new BigDecimal(symbolPrice), addedAsset.getPrice(), "Asset symbol should match");
     }
 
-    private void getTheSymbolPrice(String symbolPrice, String symbol) {
-        PriceAssets priceResponse = PriceAssets.builder()
-                .timestamp(System.currentTimeMillis())
-                .data(Collections.singletonList(symbolPrice))
-                .build();
-
-        when(pricingApiClient.getPriceBySymbol(symbol)).thenReturn(priceResponse);
-    }
 
     @Test
     void showWalletInformation() {
@@ -142,5 +134,14 @@ class WalletManagementServiceTest {
 
         assertTrue(wallet.getAssets().isEmpty(), "Asset should not be added when symbol is invalid");
         verify(pricingApiClient, times(1)).getPriceBySymbol("INVALID");
+    }
+
+    private void getTheSymbolPrice(String symbolPrice, String symbol) {
+        PriceAssets priceResponse = PriceAssets.builder()
+                .timestamp(System.currentTimeMillis())
+                .data(Collections.singletonList(symbolPrice))
+                .build();
+
+        when(pricingApiClient.getPriceBySymbol(symbol)).thenReturn(priceResponse);
     }
 }
