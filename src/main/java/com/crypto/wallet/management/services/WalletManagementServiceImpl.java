@@ -15,4 +15,20 @@ public class WalletManagementServiceImpl implements WalletManagementService {
         wallets.put(email, wallet);
         return wallet;
     }
+
+    @Override
+    public WalletDto addAsset(String email, AssetDto newAsset) {
+        WalletDto wallet = wallets.get(email);
+
+        AssetDto asset = AssetDto.builder()
+                .symbol(newAsset.getSymbol())
+                .quantity(newAsset.getQuantity())
+                .price(newAsset.getPrice())
+                .value(BigDecimal.ZERO)
+                .build();
+
+        wallet.getAssets().add(asset);
+
+        return wallet;
+    }
 }
