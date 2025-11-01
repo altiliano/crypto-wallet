@@ -24,11 +24,18 @@ public class WalletManagementServiceImpl implements WalletManagementService {
                 .symbol(newAsset.getSymbol())
                 .quantity(newAsset.getQuantity())
                 .price(newAsset.getPrice())
-                .value(BigDecimal.ZERO)
+                .value(newAsset.getValue())
                 .build();
 
         wallet.getAssets().add(asset);
+        BigDecimal total = wallet.getTotal().add(newAsset.getValue()).setScale(2, java.math.RoundingMode.HALF_UP);
+        wallet.setTotal(total);
 
         return wallet;
+    }
+
+    @Override
+    public WalletDto getWallet(String email) {
+        return wallets.get(email);
     }
 }
