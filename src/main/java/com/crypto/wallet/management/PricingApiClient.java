@@ -1,9 +1,7 @@
 package com.crypto.wallet.management;
 
-import lombok.Data;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import java.util.List;
 
 @Component
 public class PricingApiClient {
@@ -21,14 +19,5 @@ public class PricingApiClient {
                 .uri("/price/bysymbol/{symbols}", symbols)
                 .retrieve()
                 .body(PriceAssets.class);
-    }
-}
-
-@Data
-class PriceAssets {
-    private Long timestamp;
-    private List<String> data;
-
-    public PriceAssets() {
     }
 }
