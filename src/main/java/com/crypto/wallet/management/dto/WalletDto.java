@@ -9,15 +9,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class WalletDto {
     private String id;
+    private String email;
     private BigDecimal total;
     private List<AssetDto> assets;
-
-    public WalletDto(String id, BigDecimal total, List<AssetDto> assets) {
-        this.id = id;
-        this.total = total;
-        this.assets = assets;
-    }
 }
-

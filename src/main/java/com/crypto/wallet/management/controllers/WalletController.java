@@ -17,6 +17,6 @@ public class WalletController {
     @ResponseStatus(HttpStatus.CREATED)
     public WalletDto createWallet() {
 
-        return new WalletDto("123", BigDecimal.ZERO, List.of());
+        return new WalletDto("123", "test@example.com", BigDecimal.ZERO, List.of());
     }
 }
