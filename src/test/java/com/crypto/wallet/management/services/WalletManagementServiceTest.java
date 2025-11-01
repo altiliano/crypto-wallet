@@ -43,7 +43,7 @@ class WalletManagementServiceTest {
 
         assertNotNull(walletDto.getAssets(), "Assets list should not be null");
         assertEquals(1, walletDto.getAssets().size(), "Wallet should have one asset");
-        AssetDto addedAsset = walletDto.getAssets().get(0);
+        AssetDto addedAsset = walletDto.getAssets().getFirst();
         assertEquals("BTC", addedAsset.getSymbol(), "Asset symbol should match");
         assertEquals(1.5, addedAsset.getQuantity().doubleValue(), 0.0001, "Asset quantity should match");
     }
