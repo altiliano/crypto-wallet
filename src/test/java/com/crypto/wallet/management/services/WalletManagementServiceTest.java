@@ -30,9 +30,8 @@ class WalletManagementServiceTest {
     }
 
     @Test
-    void createWalletForGivenEmail() {
+    void createWallet() {
         String email = "test@example.com";
-
         WalletDto wallet = walletManagementService.create(email);
 
         assertNotNull(wallet, "Wallet should not be null");
@@ -41,7 +40,7 @@ class WalletManagementServiceTest {
     }
 
     @Test
-    void addAssetToWallet_addsAssetSuccessfully() {
+    void addAssetToWallet() {
         String symbol = "BTC";
         String symbolPrice = "0.613999999999999990";
         getTheSymbolPrice(symbolPrice, symbol);
@@ -112,10 +111,8 @@ class WalletManagementServiceTest {
     }
 
     @Test
-    void addAssetToWallet_shouldNotSaveAssetWhenSymbolNotFoundInPricingApi() {
-
+    void dontAddAssetIfPriceNotFoundOnPricingApi() {
         getTheSymbolPrice(null, "INVALID");
-
 
         String email = "test@example.com";
         walletManagementService.create(email);
@@ -126,8 +123,6 @@ class WalletManagementServiceTest {
                 .price(BigDecimal.valueOf(100))
                 .value(BigDecimal.ZERO)
                 .build();
-
-
 
         WalletDto wallet = walletManagementService.addAsset(email, invalidAsset);
 
