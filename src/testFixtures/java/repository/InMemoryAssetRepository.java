@@ -1,5 +1,6 @@
-package com.crypto.wallet.management.repository;
+package repository;
 
+import com.crypto.wallet.management.repository.AssetRepository;
 import com.crypto.wallet.management.repository.entities.Asset;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;

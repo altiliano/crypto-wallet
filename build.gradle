@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'java-test-fixtures'
 	id 'org.springframework.boot' version '3.5.7'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -36,6 +37,15 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// Test fixtures dependencies
+	testFixturesImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testFixturesImplementation 'org.testcontainers:junit-jupiter'
+	testFixturesImplementation 'org.testcontainers:postgresql'
+	testFixturesCompileOnly 'org.projectlombok:lombok'
+	testFixturesAnnotationProcessor 'org.projectlombok:lombok'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:junit-jupiter'

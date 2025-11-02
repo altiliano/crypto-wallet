@@ -1,6 +1,7 @@
 package com.crypto.wallet.management.repository;
 
 import org.junit.jupiter.api.AfterEach;
+import repository.InMemoryAssetRepository;
 
 class InMemoryAssetRepositoryTest extends AssetRepositoryContractTest {
     private InMemoryAssetRepository inMemoryRepository;
