@@ -46,14 +46,14 @@ class AssetRepositoryIntegrationTest extends AssetRepositoryContractTest {
     }
 
     @Override
-    protected Asset createTestAsset(String symbol, BigDecimal price, BigDecimal quantity, Wallet wallet) {
-        // For database tests, we need to save the wallet first
+    protected Asset createTestAsset(String symbol, BigDecimal price, BigDecimal quantity, BigDecimal value, Wallet wallet) {
         Wallet savedWallet = walletRepository.save(wallet);
 
         Asset asset = new Asset();
         asset.setSymbol(symbol);
         asset.setPrice(price);
         asset.setQuantity(quantity);
+        asset.setValue(value);
         asset.setWallet(savedWallet);
         return asset;
     }
@@ -67,7 +67,6 @@ class AssetRepositoryIntegrationTest extends AssetRepositoryContractTest {
 
     @AfterEach
     void tearDown() {
-        // Clean up the database after each test
         assetRepository.deleteAll();
         walletRepository.deleteAll();
     }

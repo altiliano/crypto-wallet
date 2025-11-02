@@ -24,10 +24,12 @@ public class Wallet {
     private String email;
 
     @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Asset> assets = new ArrayList<>();
 
     public Wallet(String email) {
         this.email = email;
+        this.assets = new ArrayList<>();
     }
 
 

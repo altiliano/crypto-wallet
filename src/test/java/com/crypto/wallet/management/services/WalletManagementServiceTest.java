@@ -4,11 +4,17 @@ import com.crypto.wallet.management.PriceAssets;
 import com.crypto.wallet.management.PricingApiClient;
 import com.crypto.wallet.management.dto.AssetDto;
 import com.crypto.wallet.management.dto.WalletDto;
+import com.crypto.wallet.management.mapper.AssetMapper;
+import com.crypto.wallet.management.mapper.WalletMapper;
+import com.crypto.wallet.management.repository.AssetRepository;
+import com.crypto.wallet.management.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import repository.InMemoryAssetRepository;
+import repository.InMemoryWalletRepository;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -24,9 +30,13 @@ class WalletManagementServiceTest {
     @Mock
     private PricingApiClient pricingApiClient;
 
+    private final WalletRepository walletRepository = new InMemoryWalletRepository();
+    private final WalletMapper walletMapper = WalletMapper.INSTANCE;
+    private final AssetMapper assetMapper = AssetMapper.INSTANCE;
+
     @BeforeEach
     void setUp() {
-        walletManagementService = new WalletManagementServiceImpl(pricingApiClient);
+        walletManagementService = new WalletManagementServiceImpl(walletRepository, walletMapper, assetMapper, pricingApiClient);
     }
 
     @Test
@@ -71,8 +81,7 @@ class WalletManagementServiceTest {
         String ethSymbol = "ETH";
         String ethSymbolPrice = "1.613999999999999990";
         String email = "wallet@example.com";
-        WalletDto wallet = walletManagementService.create(email);
-        wallet.setId("123");
+        walletManagementService.create(email);
 
         AssetDto btc = AssetDto.builder()
                 .symbol(btcSymbol)
@@ -94,7 +103,7 @@ class WalletManagementServiceTest {
 
         WalletDto result = walletManagementService.getWallet(email);
         assertNotNull(result, "Wallet should not be null");
-        assertEquals("123", result.getId(), "Wallet id should match");
+        assertNotNull(result.getId(), "Wallet should not be null");
         assertEquals(2, result.getAssets().size(), "Wallet should have two assets");
         assertEquals(new BigDecimal("158000.00"), result.getTotal(), "Total should be the sum of asset values");
 

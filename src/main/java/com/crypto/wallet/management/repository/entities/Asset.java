@@ -1,6 +1,7 @@
 package com.crypto.wallet.management.repository.entities;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Asset {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,14 +28,18 @@ public class Asset {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private BigDecimal value;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wallet_id")
     private Wallet wallet;
 
-    public Asset(String symbol, BigDecimal quantity, BigDecimal price, Wallet wallet) {
+    public Asset(String symbol, BigDecimal quantity, BigDecimal price, Wallet wallet, BigDecimal value) {
         this.symbol = symbol;
         this.quantity = quantity;
         this.price = price;
+        this.value = value;
         this.wallet = wallet;
     }
 }

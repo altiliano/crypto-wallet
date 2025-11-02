@@ -26,9 +26,9 @@ public abstract class AssetRepositoryContractTest {
         Wallet wallet = createTestWallet("test@example.com");
 
 
-        testAsset1 = createTestAsset("BTC", new BigDecimal("50000.00"), new BigDecimal("0.1"), wallet);
-        testAsset2 = createTestAsset("ETH", new BigDecimal("3000.00"), new BigDecimal("2.5"), wallet);
-        testAsset3 = createTestAsset("BTC", new BigDecimal("51000.00"), new BigDecimal("0.05"), wallet);
+        testAsset1 = createTestAsset("BTC", new BigDecimal("50000.00"), new BigDecimal("0.1"), new BigDecimal("1000.00"), wallet);
+        testAsset2 = createTestAsset("ETH", new BigDecimal("3000.00"), new BigDecimal("2.5"), new BigDecimal("2000.00"), wallet);
+        testAsset3 = createTestAsset("BTC", new BigDecimal("51000.00"), new BigDecimal("0.05"), new BigDecimal("3000.00"), wallet);
     }
 
     @Test
@@ -96,15 +96,13 @@ public abstract class AssetRepositoryContractTest {
         assertThat(assets).isEmpty();
     }
 
-
-
-    // Helper methods to create test objects
-    protected Asset createTestAsset(String symbol, BigDecimal price, BigDecimal quantity, Wallet wallet) {
+    protected Asset createTestAsset(String symbol, BigDecimal price, BigDecimal quantity, BigDecimal value, Wallet wallet) {
         Asset asset = new Asset();
         asset.setSymbol(symbol);
         asset.setPrice(price);
         asset.setQuantity(quantity);
         asset.setWallet(wallet);
+        asset.setValue(value);
         return asset;
     }
 

@@ -4,51 +4,82 @@ import com.crypto.wallet.management.PriceAssets;
 import com.crypto.wallet.management.PricingApiClient;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.dto.AssetDto;
+import com.crypto.wallet.management.mapper.AssetMapper;
+import com.crypto.wallet.management.mapper.WalletMapper;
+import com.crypto.wallet.management.repository.WalletRepository;
+import com.crypto.wallet.management.repository.entities.Asset;
+import com.crypto.wallet.management.repository.entities.Wallet;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.math.RoundingMode;
+import java.util.List;
 
 public class WalletManagementServiceImpl implements WalletManagementService {
-    private final Map<String, WalletDto> wallets = new HashMap<>();
+    private final WalletRepository walletRepository;
+    private final WalletMapper walletMapper;
+    private final AssetMapper assetMapper;
     private final PricingApiClient pricingApiClient;
 
-    public WalletManagementServiceImpl(PricingApiClient pricingApiClient) {
+    public WalletManagementServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper, AssetMapper assetMapper, PricingApiClient pricingApiClient) {
+        this.walletRepository = walletRepository;
+        this.walletMapper = walletMapper;
+        this.assetMapper = assetMapper;
         this.pricingApiClient = pricingApiClient;
     }
 
     @Override
     public WalletDto create(String email) {
-        WalletDto wallet = new WalletDto(UUID.randomUUID().toString(), email, BigDecimal.ZERO, new ArrayList<>());
-        wallets.put(email, wallet);
-        return wallet;
+       Wallet savedWallet = walletRepository.save(
+                Wallet.builder()
+                        .email(email)
+                        .build()
+        );
+
+        return  walletMapper.toDto(savedWallet);
     }
 
     @Override
     public WalletDto addAsset(String email, AssetDto newAsset) {
-        WalletDto wallet = wallets.get(email);
-
-       PriceAssets price =  pricingApiClient.getPriceBySymbol(newAsset.getSymbol());
-
-        if (price.getData() == null ||  price.getData().getFirst() == null) {
-            return wallet;
+        Wallet wallet = walletRepository.findByEmail(email).orElse(null);
+        if (wallet == null) {
+            return null;
         }
 
-        AssetDto asset = AssetDto.builder()
-                .symbol(newAsset.getSymbol())
-                .quantity(newAsset.getQuantity())
-                .price(new BigDecimal(price.getData().getFirst()))
-                .value(newAsset.getValue())
-                .build();
+        PriceAssets price = pricingApiClient.getPriceBySymbol(newAsset.getSymbol());
+        if (price.getData() == null || price.getData().isEmpty() || price.getData().getFirst() == null) {
+            return walletMapper.toDto(wallet);
+        }
 
-        wallet.getAssets().add(asset);
-        BigDecimal total = wallet.getTotal().add(newAsset.getValue()).setScale(2, java.math.RoundingMode.HALF_UP);
-        wallet.setTotal(total);
+        Asset asset = assetMapper.toEntity(newAsset);
+        BigDecimal assetPrice = new BigDecimal(price.getData().getFirst());
 
-        return wallet;
+        asset.setPrice(assetPrice);
+        wallet.addAsset(asset);
+
+        Wallet savedWallet = walletRepository.save(wallet);
+
+        return walletMapper.toDto(savedWallet);
     }
 
     @Override
     public WalletDto getWallet(String email) {
-        return wallets.get(email);
+        Wallet wallet = walletRepository.findByEmail(email).orElse(null);
+        if (wallet == null) {
+            return null;
+        }
+        BigDecimal total = calculateTotal(wallet.getAssets());
+        WalletDto walletDto = walletMapper.toDto(wallet);
+        walletDto.setTotal(total);
+        return walletDto;
+    }
+
+    private BigDecimal calculateTotal(List<Asset> assets) {
+        if (assets == null || assets.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return assets.stream()
+                .map(Asset::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 }
