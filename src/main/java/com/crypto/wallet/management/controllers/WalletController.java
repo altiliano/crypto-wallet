@@ -1,5 +1,6 @@
 package com.crypto.wallet.management.controllers;
 
+import com.crypto.wallet.management.dto.AssetDto;
 import com.crypto.wallet.management.dto.CreateWalletRequest;
 import com.crypto.wallet.management.dto.SimulationRequest;
 import com.crypto.wallet.management.dto.SimulationResponse;
@@ -36,5 +37,14 @@ public class WalletController {
 
         SimulationResponse response = walletSimulationService.simulateWalletPerformance(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{email}/assets")
+    public ResponseEntity<WalletDto> addAssetToWallet(
+            @PathVariable String email,
+            @RequestBody @Valid AssetDto assetDto) {
+
+        WalletDto updatedWallet = walletManagementService.addAsset(email, assetDto);
+        return ResponseEntity.ok(updatedWallet);
     }
 }
