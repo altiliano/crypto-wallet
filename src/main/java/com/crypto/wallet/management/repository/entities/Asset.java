@@ -28,7 +28,7 @@ public class Asset {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Column(name = "\"value\"", nullable = false)
+    @Column(name = "asset_value", nullable = false)
     private BigDecimal value;
 
     @Version

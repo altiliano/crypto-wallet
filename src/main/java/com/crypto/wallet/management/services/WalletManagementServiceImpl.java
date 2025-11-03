@@ -20,14 +20,10 @@ import java.util.List;
 @Service
 public class WalletManagementServiceImpl implements WalletManagementService {
     private final WalletRepository walletRepository;
-    private final WalletMapper walletMapper;
-    private final AssetMapper assetMapper;
     private final CoinCapPricingService coinCapPricingService;
 
-    public WalletManagementServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper, AssetMapper assetMapper, CoinCapPricingService coinCapPricingService) {
+    public WalletManagementServiceImpl(WalletRepository walletRepository, CoinCapPricingService coinCapPricingService) {
         this.walletRepository = walletRepository;
-        this.walletMapper = walletMapper;
-        this.assetMapper = assetMapper;
         this.coinCapPricingService = coinCapPricingService;
     }
 
@@ -39,7 +35,7 @@ public class WalletManagementServiceImpl implements WalletManagementService {
                         .build()
         );
 
-        return  walletMapper.toDto(savedWallet);
+        return  WalletMapper.INSTANCE.toDto(savedWallet);
     }
 
     @Override
@@ -57,13 +53,13 @@ public class WalletManagementServiceImpl implements WalletManagementService {
         BigDecimal value = newAsset.getQuantity().multiply(newAsset.getPrice()).setScale(2, RoundingMode.HALF_UP);
         newAsset.setValue(value);
 
-        Asset asset = assetMapper.toEntity(newAsset);
+        Asset asset = AssetMapper.INSTANCE.toEntity(newAsset);
         asset.setWallet(wallet);
         wallet.addAsset(asset);
 
         Wallet savedWallet = walletRepository.save(wallet);
 
-        return walletMapper.toDto(savedWallet);
+        return WalletMapper.INSTANCE.toDto(savedWallet);
     }
 
     @Override
@@ -73,7 +69,7 @@ public class WalletManagementServiceImpl implements WalletManagementService {
             return null;
         }
         BigDecimal total = calculateTotal(wallet.getAssets());
-        WalletDto walletDto = walletMapper.toDto(wallet);
+        WalletDto walletDto = WalletMapper.INSTANCE.toDto(wallet);
         walletDto.setTotal(total);
         return walletDto;
     }

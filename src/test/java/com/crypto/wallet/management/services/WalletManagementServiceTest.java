@@ -7,6 +7,7 @@ import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.mapper.AssetMapper;
 import com.crypto.wallet.management.mapper.WalletMapper;
 import com.crypto.wallet.management.repository.WalletRepository;
+import org.mapstruct.factory.Mappers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,13 +29,14 @@ class WalletManagementServiceTest {
     @Mock
     private CoinCapPricingService coinCapPricingService;
 
+    private final WalletMapper walletMapper = Mappers.getMapper(WalletMapper.class);
+    private final AssetMapper assetMapper = Mappers.getMapper(AssetMapper.class);
+
     private final WalletRepository walletRepository = new InMemoryWalletRepository();
-    private final WalletMapper walletMapper = WalletMapper.INSTANCE;
-    private final AssetMapper assetMapper = AssetMapper.INSTANCE;
 
     @BeforeEach
     void setUp() {
-        walletManagementService = new WalletManagementServiceImpl(walletRepository, walletMapper, assetMapper, coinCapPricingService);
+        walletManagementService = new WalletManagementServiceImpl(walletRepository, coinCapPricingService);
     }
 
     @Test
