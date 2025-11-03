@@ -3,7 +3,6 @@ package com.crypto.wallet.management.service;
 import com.crypto.wallet.management.dto.SimulationAsset;
 import com.crypto.wallet.management.dto.SimulationRequest;
 import com.crypto.wallet.management.dto.SimulationResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,13 +18,12 @@ public class WalletSimulationService {
 
     private final PricingService pricingService;
 
-    @Autowired(required = false)
     public WalletSimulationService(PricingService pricingService) {
         this.pricingService = pricingService;
     }
 
     public SimulationResponse simulateWalletPerformance(SimulationRequest request) {
-        LocalDate targetDate = request.getDate() != null ? request.getDate() : LocalDate.now();
+        LocalDate targetDate = request.getEffectiveDate();
 
         List<AssetPerformance> performances = new ArrayList<>();
         BigDecimal totalCurrentValue = BigDecimal.ZERO;
