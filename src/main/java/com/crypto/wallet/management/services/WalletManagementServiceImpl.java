@@ -4,6 +4,7 @@ import com.crypto.wallet.management.PriceAssets;
 import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.dto.AssetDto;
+import com.crypto.wallet.management.exceptions.WalletNotFoundException;
 import com.crypto.wallet.management.mapper.AssetMapper;
 import com.crypto.wallet.management.mapper.WalletMapper;
 import com.crypto.wallet.management.repository.WalletRepository;
@@ -13,7 +14,6 @@ import com.crypto.wallet.management.repository.entities.Wallet;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.math.RoundingMode;
 import java.util.List;
 
@@ -42,7 +42,7 @@ public class WalletManagementServiceImpl implements WalletManagementService {
     public WalletDto addAsset(String email, AssetDto newAsset) {
         Wallet wallet = walletRepository.findByEmail(email).orElse(null);
         if (wallet == null) {
-            throw new IllegalArgumentException("Wallet not found for email: " + email);
+            throw new WalletNotFoundException(email);
         }
 
         PriceAssets priceResponse = coinCapPricingService.getPriceBySymbol(newAsset.getSymbol());
@@ -64,10 +64,9 @@ public class WalletManagementServiceImpl implements WalletManagementService {
 
     @Override
     public WalletDto getWallet(String email) {
-        Wallet wallet = walletRepository.findByEmail(email).orElse(null);
-        if (wallet == null) {
-            return null;
-        }
+        Wallet wallet = walletRepository.findByEmail(email)
+                .orElseThrow(() -> new WalletNotFoundException(email));
+
         BigDecimal total = calculateTotal(wallet.getAssets());
         WalletDto walletDto = WalletMapper.INSTANCE.toDto(wallet);
         walletDto.setTotal(total);
