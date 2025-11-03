@@ -27,7 +27,7 @@ class CoinCapPricingServiceTest {
         mockWebServer.start();
 
         String baseUrl = mockWebServer.url("/").toString();
-        coinCapPricingService = new CoinCapPricingService(new RestTemplate(), "test-key", "https://api.coincap.io/v2") {
+        coinCapPricingService = new CoinCapPricingService( "test-key", "https://api.coincap.io/v2") {
             private final RestClient client = RestClient.builder()
                     .baseUrl(baseUrl)
                     .defaultHeader("Authorization", "Bearer  banaa")

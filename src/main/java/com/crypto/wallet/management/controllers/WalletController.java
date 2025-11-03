@@ -32,7 +32,7 @@ public class WalletController {
         return walletManagementService.create(request.getEmail());
     }
 
-    @PostMapping("/simulate")
+    @GetMapping("/simulate")
     public ResponseEntity<SimulationResponse> simulateWalletProfit(@RequestBody @Valid SimulationRequest request) {
 
         SimulationResponse response = walletSimulationService.simulateWalletPerformance(request);
@@ -46,6 +46,12 @@ public class WalletController {
 
         WalletDto updatedWallet = walletManagementService.addAsset(email, assetDto);
         return ResponseEntity.ok(updatedWallet);
+    }
+
+    @GetMapping("/info/{email}")
+    public ResponseEntity<WalletDto> getWalletInfo(@PathVariable String email) {
+        WalletDto wallet = walletManagementService.getWallet(email);
+        return ResponseEntity.ok(wallet);
     }
 
     @GetMapping("/health")

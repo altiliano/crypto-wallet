@@ -3,12 +3,7 @@ package com.crypto.wallet.management.service;
 import com.crypto.wallet.management.PriceAssets;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.RestClient;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,45 +15,31 @@ import java.util.Optional;
 @Service
 public class CoinCapPricingService implements PricingService {
 
-    private final RestTemplate restTemplate;
     private final RestClient restClient;
-    private final String apiKey;
-    private final String baseUrl;
 
-    public CoinCapPricingService(RestTemplate restTemplate,
-                                @Value("${coincap.api-key:}") String apiKey,
-                                @Value("${coincap.api.base-url:https://api.coincap.io/v2}") String baseUrl) {
-        this.restTemplate = restTemplate;
-        this.apiKey = apiKey;
-        this.baseUrl = baseUrl;
+    public CoinCapPricingService(@Value("${coincap.api-key:}") String apiKey,
+                                @Value("${coincap.api.base-url:https://pro.coincap.io}") String baseUrl) {
 
-        // Initialize RestClient for v3 API compatibility
         this.restClient = RestClient.builder()
-                .baseUrl("https://rest.coincap.io/v3/")
-                .defaultHeader("Authorization", "Bearer " + (apiKey != null ? apiKey : "banaa"))
+                .baseUrl(baseUrl)
+                .defaultHeader("Authorization", "Bearer " + apiKey)
                 .build();
     }
 
     @Override
     public Optional<BigDecimal> getCurrentPrice(String symbol) {
         try {
-            String url = baseUrl + "/assets/" + symbol.toLowerCase();
-            HttpHeaders headers = new HttpHeaders();
-            if (apiKey != null && !apiKey.isEmpty()) {
-                headers.setBearerAuth(apiKey);
-            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restClient.get()
+                    .uri("/v3/price/bysymbol/{symbol}", symbol.toLowerCase())
+                    .retrieve()
+                    .body(Map.class);
 
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<Map> response = restTemplate.exchange(
-                url, HttpMethod.GET, entity, Map.class);
+            if (response != null && response.containsKey("data")) {
+                @SuppressWarnings("unchecked")
+                List<String> data =(List<String>) response.get("data");
+                return Optional.of(new BigDecimal(data.getFirst()));
 
-            Map<String, Object> body = response.getBody();
-            if (body != null && body.containsKey("data")) {
-                Map<String, Object> data = (Map<String, Object>) body.get("data");
-                if (data.containsKey("priceUsd")) {
-                    String priceStr = (String) data.get("priceUsd");
-                    return Optional.of(new BigDecimal(priceStr));
-                }
             }
             return Optional.empty();
         } catch (Exception e) {
@@ -71,24 +52,19 @@ public class CoinCapPricingService implements PricingService {
         try {
             long startTimestamp = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
             long endTimestamp = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+            String id = getAssetIdBySymbol(symbol).orElse(null);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restClient.get()
+                    .uri("/v3/assets/{slug}/history?interval=d1&start={start}&end={end}",
+                         id, startTimestamp, endTimestamp)
+                    .retrieve()
+                    .body(Map.class);
 
-            String url = String.format("%s/assets/%s/history?interval=d1&start=%d&end=%d",
-                    baseUrl, symbol.toLowerCase(), startTimestamp, endTimestamp);
-
-            HttpHeaders headers = new HttpHeaders();
-            if (apiKey != null && !apiKey.isEmpty()) {
-                headers.setBearerAuth(apiKey);
-            }
-
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<Map> response = restTemplate.exchange(
-                url, HttpMethod.GET, entity, Map.class);
-
-            Map<String, Object> body = response.getBody();
-            if (body != null && body.containsKey("data")) {
-                List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
+            if (response != null && response.containsKey("data")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
                 if (!data.isEmpty()) {
-                    Map<String, Object> priceData = data.get(0);
+                    Map<String, Object> priceData = data.getFirst();
                     if (priceData.containsKey("priceUsd")) {
                         String priceStr = (String) priceData.get("priceUsd");
                         return Optional.of(new BigDecimal(priceStr));
@@ -101,17 +77,39 @@ public class CoinCapPricingService implements PricingService {
         }
     }
 
-    /**
-     * Get price by symbol using the v3 API (replaces PricingApiClient functionality)
-     */
+
+    private Optional<String> getAssetIdBySymbol(String symbol) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restClient.get()
+                    .uri("/v3/assets?search={symbol}", symbol.toLowerCase())
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response != null && response.containsKey("data")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+
+                for (Map<String, Object> asset : data) {
+                    String assetSymbol = (String) asset.get("symbol");
+                    if (assetSymbol != null && assetSymbol.equalsIgnoreCase(symbol)) {
+                        return Optional.ofNullable((String) asset.get("id"));
+                    }
+                }
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
     public PriceAssets getPriceBySymbol(String symbols) {
         try {
             return restClient.get()
-                    .uri("/price/bysymbol/{symbols}", symbols)
+                    .uri("/v3/price/bysymbol/{symbols}", symbols)
                     .retrieve()
                     .body(PriceAssets.class);
         } catch (Exception e) {
-            // Return empty PriceAssets on error
             return PriceAssets.builder()
                     .timestamp(System.currentTimeMillis())
                     .data(List.of())
