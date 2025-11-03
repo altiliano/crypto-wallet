@@ -1,7 +1,7 @@
 package com.crypto.wallet.management.services;
 
 import com.crypto.wallet.management.PriceAssets;
-import com.crypto.wallet.management.PricingApiClient;
+import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.dto.AssetDto;
 import com.crypto.wallet.management.mapper.AssetMapper;
@@ -10,21 +10,24 @@ import com.crypto.wallet.management.repository.WalletRepository;
 import com.crypto.wallet.management.repository.entities.Asset;
 import com.crypto.wallet.management.repository.entities.Wallet;
 
+import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
+@Service
 public class WalletManagementServiceImpl implements WalletManagementService {
     private final WalletRepository walletRepository;
     private final WalletMapper walletMapper;
     private final AssetMapper assetMapper;
-    private final PricingApiClient pricingApiClient;
+    private final CoinCapPricingService coinCapPricingService;
 
-    public WalletManagementServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper, AssetMapper assetMapper, PricingApiClient pricingApiClient) {
+    public WalletManagementServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper, AssetMapper assetMapper, CoinCapPricingService coinCapPricingService) {
         this.walletRepository = walletRepository;
         this.walletMapper = walletMapper;
         this.assetMapper = assetMapper;
-        this.pricingApiClient = pricingApiClient;
+        this.coinCapPricingService = coinCapPricingService;
     }
 
     @Override
@@ -45,7 +48,7 @@ public class WalletManagementServiceImpl implements WalletManagementService {
             return null;
         }
 
-        PriceAssets price = pricingApiClient.getPriceBySymbol(newAsset.getSymbol());
+        PriceAssets price = coinCapPricingService.getPriceBySymbol(newAsset.getSymbol());
         if (price.getData() == null || price.getData().isEmpty() || price.getData().getFirst() == null) {
             return walletMapper.toDto(wallet);
         }

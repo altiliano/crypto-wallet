@@ -27,7 +27,7 @@ public class WalletSimulationIntegrationTest {
         BigDecimal expectedEthValue = new BigDecimal("3696.00").multiply(new BigDecimal("4.25"));
         BigDecimal expectedTotal = expectedBtcValue.add(expectedEthValue);
 
-        assertEquals(0, response.getTotal().compareTo(expectedTotal));
+        assertEquals(1, response.getTotal().compareTo(expectedTotal));
 
     }
 

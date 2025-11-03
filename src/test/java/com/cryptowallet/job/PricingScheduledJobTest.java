@@ -2,13 +2,15 @@ package com.cryptowallet.job;
 
 import com.crypto.wallet.management.ManagementApplication;
 import com.crypto.wallet.management.PricingScheduledJob;
-import com.crypto.wallet.management.PricingApiClient;
+import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.PriceAssets;
 import com.crypto.wallet.management.repository.AssetRepository;
+import com.crypto.wallet.management.repository.WalletRepository;
 import com.crypto.wallet.management.repository.entities.Asset;
 import com.crypto.wallet.management.repository.entities.Wallet;
-import com.crypto.wallet.management.service.AssetCacheService;
 import com.crypto.wallet.management.service.AssetPriceUpdateService;
+import com.crypto.wallet.management.mapper.WalletMapper;
+import com.crypto.wallet.management.mapper.AssetMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
@@ -35,7 +37,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PricingScheduledJobTest {
 
     @MockitoBean
-    private PricingApiClient pricingApiClient;
+    private CoinCapPricingService coinCapPricingService;
+
+    @MockitoBean
+    private WalletRepository walletRepository;
+
+    @MockitoBean
+    private WalletMapper walletMapper;
+
+    @MockitoBean
+    private AssetMapper assetMapper;
 
     @Autowired
     private Scheduler scheduler;
@@ -47,7 +58,7 @@ public class PricingScheduledJobTest {
     public void setUp() {
         assetRepository = new InMemoryAssetRepository();
         AssetPriceUpdateService assetPriceUpdateService = new AssetPriceUpdateService(assetRepository);
-        pricingScheduledJob = new PricingScheduledJob(pricingApiClient, assetRepository, assetPriceUpdateService);
+        pricingScheduledJob = new PricingScheduledJob(coinCapPricingService, assetRepository, assetPriceUpdateService);
 
         assetRepository.deleteAll();
 
@@ -96,8 +107,8 @@ public class PricingScheduledJobTest {
                 .data(List.of("3200.75"))
                 .build();
 
-        when(pricingApiClient.getPriceBySymbol("BTC")).thenReturn(mockBtcPrice);
-        when(pricingApiClient.getPriceBySymbol("ETH")).thenReturn(mockEthPrice);
+        when(coinCapPricingService.getPriceBySymbol("BTC")).thenReturn(mockBtcPrice);
+        when(coinCapPricingService.getPriceBySymbol("ETH")).thenReturn(mockEthPrice);
 
         JobExecutionContext mockContext = Mockito.mock(JobExecutionContext.class);
 
@@ -105,8 +116,8 @@ public class PricingScheduledJobTest {
         pricingScheduledJob.execute(mockContext);
 
 
-        verify(pricingApiClient, times(1)).getPriceBySymbol("BTC");
-        verify(pricingApiClient, times(1)).getPriceBySymbol("ETH");
+        verify(coinCapPricingService, times(1)).getPriceBySymbol("BTC");
+        verify(coinCapPricingService, times(1)).getPriceBySymbol("ETH");
 
 
         List<Asset> btcAssets = assetRepository.findBySymbol("BTC");
@@ -143,7 +154,7 @@ public class PricingScheduledJobTest {
 
     @Test
     public void testPricingJobHandlesException() throws JobExecutionException {
-        when(pricingApiClient.getPriceBySymbol(anyString())).thenThrow(new RuntimeException("API Error"));
+        when(coinCapPricingService.getPriceBySymbol(anyString())).thenThrow(new RuntimeException("API Error"));
 
 
         List<Asset> originalBtcAssets = assetRepository.findBySymbol("BTC");
@@ -155,7 +166,7 @@ public class PricingScheduledJobTest {
 
         pricingScheduledJob.execute(mockContext);
 
-        verify(pricingApiClient, atLeastOnce()).getPriceBySymbol(anyString());
+        verify(coinCapPricingService, atLeastOnce()).getPriceBySymbol(anyString());
 
         List<Asset> btcAssetsAfter = assetRepository.findBySymbol("BTC");
         List<Asset> ethAssetsAfter = assetRepository.findBySymbol("ETH");
@@ -177,7 +188,7 @@ public class PricingScheduledJobTest {
 
         pricingScheduledJob.execute(mockContext);
 
-        verify(pricingApiClient, never()).getPriceBySymbol(anyString());
+        verify(coinCapPricingService, never()).getPriceBySymbol(anyString());
 
         assertThat(assetRepository.findAll()).isEmpty();
         assertThat(assetRepository.findDistinctSymbols()).isEmpty();

@@ -1,7 +1,11 @@
 package com.crypto.wallet.management.cache;
 
 import com.crypto.wallet.management.repository.AssetRepository;
+import com.crypto.wallet.management.repository.WalletRepository;
 import com.crypto.wallet.management.service.AssetCacheService;
+import com.crypto.wallet.management.service.CoinCapPricingService;
+import com.crypto.wallet.management.mapper.WalletMapper;
+import com.crypto.wallet.management.mapper.AssetMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +34,18 @@ public class AssetCachingTest {
 
     @MockitoBean
     private AssetRepository assetRepository;
+
+    @MockitoBean
+    private CoinCapPricingService coinCapPricingService;
+
+    @MockitoBean
+    private WalletRepository walletRepository;
+
+    @MockitoBean
+    private WalletMapper walletMapper;
+
+    @MockitoBean
+    private AssetMapper assetMapper;
 
     @BeforeEach
     void setUp() {

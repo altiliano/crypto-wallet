@@ -1,19 +1,17 @@
 package com.crypto.wallet.management.services;
 
 import com.crypto.wallet.management.PriceAssets;
-import com.crypto.wallet.management.PricingApiClient;
+import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.dto.AssetDto;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.mapper.AssetMapper;
 import com.crypto.wallet.management.mapper.WalletMapper;
-import com.crypto.wallet.management.repository.AssetRepository;
 import com.crypto.wallet.management.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import repository.InMemoryAssetRepository;
 import repository.InMemoryWalletRepository;
 
 import java.math.BigDecimal;
@@ -28,7 +26,7 @@ class WalletManagementServiceTest {
     private WalletManagementService walletManagementService;
 
     @Mock
-    private PricingApiClient pricingApiClient;
+    private CoinCapPricingService coinCapPricingService;
 
     private final WalletRepository walletRepository = new InMemoryWalletRepository();
     private final WalletMapper walletMapper = WalletMapper.INSTANCE;
@@ -36,7 +34,7 @@ class WalletManagementServiceTest {
 
     @BeforeEach
     void setUp() {
-        walletManagementService = new WalletManagementServiceImpl(walletRepository, walletMapper, assetMapper, pricingApiClient);
+        walletManagementService = new WalletManagementServiceImpl(walletRepository, walletMapper, assetMapper, coinCapPricingService);
     }
 
     @Test
@@ -137,7 +135,7 @@ class WalletManagementServiceTest {
 
 
         assertTrue(wallet.getAssets().isEmpty(), "Asset should not be added when symbol is invalid");
-        verify(pricingApiClient, times(1)).getPriceBySymbol("INVALID");
+        verify(coinCapPricingService, times(1)).getPriceBySymbol("INVALID");
     }
 
     private void getTheSymbolPrice(String symbolPrice, String symbol) {
@@ -146,6 +144,6 @@ class WalletManagementServiceTest {
                 .data(Collections.singletonList(symbolPrice))
                 .build();
 
-        when(pricingApiClient.getPriceBySymbol(symbol)).thenReturn(priceResponse);
+        when(coinCapPricingService.getPriceBySymbol(symbol)).thenReturn(priceResponse);
     }
 }

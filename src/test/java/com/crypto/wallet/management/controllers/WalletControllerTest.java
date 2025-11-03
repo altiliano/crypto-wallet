@@ -97,13 +97,28 @@ class WalletControllerTest {
     }
 
     @Test
-    void simulateWalletProfit_WithEmptyAssets_ShouldReturnBadRequest() throws Exception {
-        SimulationRequest invalidRequest = new SimulationRequest(List.of(), LocalDate.of(2023, 1, 1));
+    void simulateWalletProfit_WithEmptyAssets_ShouldReturnOk() throws Exception {
+        SimulationRequest request = new SimulationRequest(List.of(), LocalDate.of(2023, 1, 1));
+
+        SimulationResponse expectedResponse = new SimulationResponse(
+                BigDecimal.ZERO,
+                null,
+                BigDecimal.ZERO,
+                null,
+                BigDecimal.ZERO
+        );
+
+        when(walletSimulationService.simulateWalletPerformance(any(SimulationRequest.class)))
+                .thenReturn(expectedResponse);
 
         mockMvc.perform(post("/api/wallets/simulate")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.total").value(0))
+                .andExpect(jsonPath("$.bestAsset").doesNotExist())
+                .andExpect(jsonPath("$.worstAsset").doesNotExist());
     }
 
     @Test

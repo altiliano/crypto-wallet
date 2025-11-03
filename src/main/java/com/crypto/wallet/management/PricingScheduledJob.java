@@ -1,7 +1,7 @@
 package com.crypto.wallet.management;
 
+import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.repository.AssetRepository;
-import com.crypto.wallet.management.service.AssetCacheService;
 import com.crypto.wallet.management.service.AssetPriceUpdateService;
 import org.jetbrains.annotations.NotNull;
 import org.quartz.Job;
@@ -24,14 +24,14 @@ public class PricingScheduledJob implements Job {
     private static final Logger logger = LoggerFactory.getLogger(PricingScheduledJob.class);
     private static final int MAX_THREADS = 3;
 
-    private final PricingApiClient pricingApiClient;
+    private final CoinCapPricingService coinCapPricingService;
     private final AssetRepository assetRepository;
     private final AssetPriceUpdateService assetPriceUpdateService;
 
-    public PricingScheduledJob(PricingApiClient pricingApiClient,
+    public PricingScheduledJob(CoinCapPricingService coinCapPricingService,
                                AssetRepository assetRepository,
                                AssetPriceUpdateService assetPriceUpdateService) {
-        this.pricingApiClient = pricingApiClient;
+        this.coinCapPricingService = coinCapPricingService;
         this.assetRepository = assetRepository;
         this.assetPriceUpdateService = assetPriceUpdateService;
     }
@@ -57,7 +57,7 @@ public class PricingScheduledJob implements Job {
                         .map(symbol -> CompletableFuture.supplyAsync(() -> {
                             try {
                                 logger.debug("Fetching price for symbol: {}", symbol);
-                                PriceAssets priceResponse = pricingApiClient.getPriceBySymbol(symbol);
+                                PriceAssets priceResponse = coinCapPricingService.getPriceBySymbol(symbol);
 
                                 if (priceResponse.getData() != null &&
                                     !priceResponse.getData().isEmpty() &&

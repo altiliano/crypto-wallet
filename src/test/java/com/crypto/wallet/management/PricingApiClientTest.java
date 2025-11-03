@@ -1,5 +1,6 @@
 package com.crypto.wallet.management;
 
+import com.crypto.wallet.management.service.CoinCapPricingService;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -9,15 +10,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PricingApiClientTest {
+class CoinCapPricingServiceTest {
 
     private MockWebServer mockWebServer;
-    private PricingApiClient pricingApiClient;
+    private CoinCapPricingService coinCapPricingService;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -25,7 +27,7 @@ class PricingApiClientTest {
         mockWebServer.start();
 
         String baseUrl = mockWebServer.url("/").toString();
-        pricingApiClient = new PricingApiClient() {
+        coinCapPricingService = new CoinCapPricingService(new RestTemplate(), "test-key", "https://api.coincap.io/v2") {
             private final RestClient client = RestClient.builder()
                     .baseUrl(baseUrl)
                     .defaultHeader("Authorization", "Bearer  banaa")
@@ -61,7 +63,7 @@ class PricingApiClientTest {
                         """));
 
 
-        PriceAssets result = pricingApiClient.getPriceBySymbol(symbol);
+        PriceAssets result = coinCapPricingService.getPriceBySymbol(symbol);
 
 
         assertThat(result).isNotNull();
@@ -92,7 +94,7 @@ class PricingApiClientTest {
                         """));
 
 
-        PriceAssets result = pricingApiClient.getPriceBySymbol(symbols);
+        PriceAssets result = coinCapPricingService.getPriceBySymbol(symbols);
 
 
         assertThat(result).isNotNull();
@@ -122,7 +124,7 @@ class PricingApiClientTest {
                         """));
 
 
-        PriceAssets result = pricingApiClient.getPriceBySymbol(symbol);
+        PriceAssets result = coinCapPricingService.getPriceBySymbol(symbol);
 
 
         assertThat(result).isNotNull();
