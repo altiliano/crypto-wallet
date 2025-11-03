@@ -1,7 +1,6 @@
 package com.crypto.wallet.management.repository;
 
 import com.crypto.wallet.management.repository.entities.Asset;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +15,6 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
 
     List<Asset> findBySymbol(String symbol);
 
-   // @Cacheable(value = "distinctSymbols", unless = "#result == null or #result.isEmpty()")
     @Query("SELECT DISTINCT a.symbol FROM Asset a")
     List<String> findDistinctSymbols();
 
