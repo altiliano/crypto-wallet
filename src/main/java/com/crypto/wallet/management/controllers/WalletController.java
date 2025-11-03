@@ -47,4 +47,9 @@ public class WalletController {
         WalletDto updatedWallet = walletManagementService.addAsset(email, assetDto);
         return ResponseEntity.ok(updatedWallet);
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("{\"status\":\"UP\",\"service\":\"crypto-wallet-management\"}");
+    }
 }

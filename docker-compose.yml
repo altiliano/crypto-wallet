@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: crypto-wallet-db
+    environment:
+      POSTGRES_DB: crypto_wallet
+      POSTGRES_USER: crypto_user
+      POSTGRES_PASSWORD: crypto_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crypto_user -d crypto_wallet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crypto-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crypto-wallet-app
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/crypto_wallet
+      SPRING_DATASOURCE_USERNAME: crypto_user
+      SPRING_DATASOURCE_PASSWORD: crypto_password
+      COINCAP_API_KEY: ${COINCAP_API_KEY:-}
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - crypto-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  crypto-network:
+    driver: bridge
