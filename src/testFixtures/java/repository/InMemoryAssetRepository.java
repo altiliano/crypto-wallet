@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,6 +29,27 @@ public class InMemoryAssetRepository implements AssetRepository {
         return assets.values().stream()
                 .filter(asset -> Objects.equals(asset.getSymbol(), symbol))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> findDistinctSymbols() {
+        return assets.values().stream()
+                .map(Asset::getSymbol)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public int updatePriceBySymbol(String symbol, BigDecimal price) {
+        List<Asset> updatedAssets = assets.values().stream()
+                .filter(asset -> Objects.equals(asset.getSymbol(), symbol))
+                .peek(asset -> {
+                    asset.setPrice(price);
+                    asset.setValue(asset.getQuantity().multiply(price));
+                })
+                .toList();
+
+        return updatedAssets.size();
     }
 
     @Override
