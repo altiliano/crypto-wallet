@@ -29,7 +29,7 @@ public class PricingScheduledJobPerformanceTest {
     @MockitoBean
     private CoinCapPricingService coinCapPricingService;
 
-    @MockitoBean
+    @Autowired
     private WalletRepository walletRepository;
 
     @MockitoBean
@@ -41,13 +41,16 @@ public class PricingScheduledJobPerformanceTest {
     @Test
     public void testOptimizedSymbolRetrieval() {
         Wallet testWallet = new Wallet("test@example.com");
+        // Save the wallet first to avoid TransientObjectException
+        testWallet = walletRepository.save(testWallet);
+
         List<Asset> assets = new ArrayList<>();
 
-        // Create 1000 assets with only 3 unique symbols (simulating the 500k/10 scenario)
+
         String[] symbols = {"BTC", "ETH", "ADA"};
 
         for (int i = 0; i < 1000; i++) {
-            String symbol = symbols[i % 3]; // Cycle through the 3 symbols
+            String symbol = symbols[i % 3];
             Asset asset = Asset.builder()
                     .symbol(symbol)
                     .quantity(new BigDecimal("1.0"))
@@ -58,22 +61,22 @@ public class PricingScheduledJobPerformanceTest {
             assets.add(asset);
         }
 
-        // Save test data
+
         assetRepository.saveAll(assets);
 
-        // Test the optimized method
+
         long startTime = System.currentTimeMillis();
         List<String> distinctSymbols = assetRepository.findDistinctSymbols();
         long endTime = System.currentTimeMillis();
 
-        // Verify results
+
         assertThat(distinctSymbols).hasSize(3);
         assertThat(distinctSymbols).containsExactlyInAnyOrder("BTC", "ETH", "ADA");
 
         System.out.println("Optimized query took: " + (endTime - startTime) + "ms");
         System.out.println("Returned " + distinctSymbols.size() + " unique symbols from " + assets.size() + " assets");
 
-        // Compare with the old inefficient approach (simulation)
+
         startTime = System.currentTimeMillis();
         List<Asset> allAssets = assetRepository.findAll();
         List<String> symbolsFromStream = allAssets.stream()
@@ -85,7 +88,6 @@ public class PricingScheduledJobPerformanceTest {
         System.out.println("Inefficient approach took: " + (endTime - startTime) + "ms");
         System.out.println("Loaded " + allAssets.size() + " assets to get " + symbolsFromStream.size() + " unique symbols");
 
-        // Cleanup
         assetRepository.deleteAll();
     }
 }
