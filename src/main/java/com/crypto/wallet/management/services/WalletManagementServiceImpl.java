@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -45,18 +46,19 @@ public class WalletManagementServiceImpl implements WalletManagementService {
     public WalletDto addAsset(String email, AssetDto newAsset) {
         Wallet wallet = walletRepository.findByEmail(email).orElse(null);
         if (wallet == null) {
-            return null;
+            throw new IllegalArgumentException("Wallet not found for email: " + email);
         }
 
-        PriceAssets price = coinCapPricingService.getPriceBySymbol(newAsset.getSymbol());
-        if (price.getData() == null || price.getData().isEmpty() || price.getData().getFirst() == null) {
-            return walletMapper.toDto(wallet);
+        PriceAssets priceResponse = coinCapPricingService.getPriceBySymbol(newAsset.getSymbol());
+        if (priceResponse.getData() == null || priceResponse.getData().isEmpty() || priceResponse.getData().getFirst() == null) {
+            throw new IllegalArgumentException("Price not found for symbol: " + newAsset.getSymbol());
         }
+
+        BigDecimal value = newAsset.getQuantity().multiply(newAsset.getPrice()).setScale(2, RoundingMode.HALF_UP);
+        newAsset.setValue(value);
 
         Asset asset = assetMapper.toEntity(newAsset);
-        BigDecimal assetPrice = new BigDecimal(price.getData().getFirst());
-
-        asset.setPrice(assetPrice);
+        asset.setWallet(wallet);
         wallet.addAsset(asset);
 
         Wallet savedWallet = walletRepository.save(wallet);

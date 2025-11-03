@@ -50,15 +50,16 @@ class WalletManagementServiceTest {
     @Test
     void addAssetToWallet() {
         String symbol = "BTC";
-        String symbolPrice = "0.613999999999999990";
-        getTheSymbolPrice(symbolPrice, symbol);
+        String apiPrice = "0.613999999999999990";
+        BigDecimal userPrice = new BigDecimal("50000.00");
+        getTheSymbolPrice(apiPrice, symbol);
 
         String email = "test2@example.com";
         walletManagementService.create(email);
         AssetDto asset = AssetDto.builder()
                 .symbol(symbol)
-                .quantity(BigDecimal.valueOf(1.5))
-                .value(BigDecimal.ZERO)
+                .quantity(new BigDecimal("1.50"))
+                .price(userPrice)
                 .build();
 
         var walletDto = walletManagementService.addAsset(email, asset);
@@ -67,8 +68,9 @@ class WalletManagementServiceTest {
         assertEquals(1, walletDto.getAssets().size(), "Wallet should have one asset");
         AssetDto addedAsset = walletDto.getAssets().getFirst();
         assertEquals(symbol, addedAsset.getSymbol(), "Asset symbol should match");
-        assertEquals(1.5, addedAsset.getQuantity().doubleValue(), 0.0001, "Asset quantity should match");
-        assertEquals(new BigDecimal(symbolPrice), addedAsset.getPrice(), "Asset symbol should match");
+        assertEquals(new BigDecimal("1.50"), addedAsset.getQuantity(), "Asset quantity should match");
+        assertEquals(userPrice, addedAsset.getPrice(), "Should keep user-provided price");
+        assertEquals(new BigDecimal("75000.00"), addedAsset.getValue(), "Value should be quantity × price");
     }
 
 
@@ -83,15 +85,15 @@ class WalletManagementServiceTest {
 
         AssetDto btc = AssetDto.builder()
                 .symbol(btcSymbol)
-                .quantity(BigDecimal.valueOf(1.5))
-                .price(BigDecimal.valueOf(100000.00))
-                .value(BigDecimal.valueOf(150000.00))
+                .quantity(new BigDecimal("1.5"))
+                .price(new BigDecimal("100000.00"))
+                .value(new BigDecimal("150000.00"))
                 .build();
         AssetDto eth = AssetDto.builder()
                 .symbol(ethSymbol)
-                .quantity(BigDecimal.valueOf(2))
-                .price(BigDecimal.valueOf(4000.00))
-                .value(BigDecimal.valueOf(8000.00))
+                .quantity(new BigDecimal("2.00"))
+                .price(new BigDecimal("4000.00"))
+                .value(new BigDecimal("8000.00"))
                 .build();
 
         getTheSymbolPrice(btcSymbolPrice, btcSymbol);
@@ -109,12 +111,12 @@ class WalletManagementServiceTest {
         AssetDto resultEth = result.getAssets().stream().filter(a -> a.getSymbol().equals("ETH")).findFirst().orElse(null);
         assertNotNull(resultBtc, "BTC asset should be present");
         assertNotNull(resultEth, "ETH asset should be present");
-        assertEquals(BigDecimal.valueOf(1.5), resultBtc.getQuantity());
-        assertEquals(new BigDecimal(btcSymbolPrice), resultBtc.getPrice());
-        assertEquals(BigDecimal.valueOf(150000.00), resultBtc.getValue());
-        assertEquals(BigDecimal.valueOf(2), resultEth.getQuantity());
-        assertEquals(new BigDecimal(ethSymbolPrice), resultEth.getPrice());
-        assertEquals(BigDecimal.valueOf(8000.00), resultEth.getValue());
+        assertEquals(new BigDecimal("1.5"), resultBtc.getQuantity());
+        assertEquals(new BigDecimal("100000.00"), resultBtc.getPrice());  // User-provided price should be kept
+        assertEquals(new BigDecimal("150000.00"), resultBtc.getValue());
+        assertEquals(new BigDecimal("2.00"), resultEth.getQuantity());
+        assertEquals(new BigDecimal("4000.00"), resultEth.getPrice());    // User-provided price should be kept
+        assertEquals(new BigDecimal("8000.00"), resultEth.getValue());
     }
 
     @Test
@@ -128,14 +130,28 @@ class WalletManagementServiceTest {
                 .symbol("INVALID")
                 .quantity(BigDecimal.valueOf(10))
                 .price(BigDecimal.valueOf(100))
-                .value(BigDecimal.ZERO)
                 .build();
 
-        WalletDto wallet = walletManagementService.addAsset(email, invalidAsset);
+        // Should throw exception when symbol is not found in pricing API
+        assertThrows(IllegalArgumentException.class, () -> {
+            walletManagementService.addAsset(email, invalidAsset);
+        }, "Should throw exception when symbol price is not found");
 
-
-        assertTrue(wallet.getAssets().isEmpty(), "Asset should not be added when symbol is invalid");
         verify(coinCapPricingService, times(1)).getPriceBySymbol("INVALID");
+    }
+
+    @Test
+    void throwExceptionWhenWalletNotFound() {
+        AssetDto asset = AssetDto.builder()
+                .symbol("BTC")
+                .quantity(BigDecimal.valueOf(1.0))
+                .price(BigDecimal.valueOf(50000.00))
+                .build();
+
+        // Should throw exception when wallet doesn't exist
+        assertThrows(IllegalArgumentException.class, () -> {
+            walletManagementService.addAsset("nonexistent@example.com", asset);
+        }, "Should throw exception when wallet is not found");
     }
 
     private void getTheSymbolPrice(String symbolPrice, String symbol) {
