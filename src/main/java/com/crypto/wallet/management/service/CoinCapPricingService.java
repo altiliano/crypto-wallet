@@ -26,7 +26,7 @@ public class CoinCapPricingService implements PricingService {
     private final String baseUrl;
 
     public CoinCapPricingService(RestTemplate restTemplate,
-                                @Value("${coincap.api.key:}") String apiKey,
+                                @Value("${coincap.api-key:}") String apiKey,
                                 @Value("${coincap.api.base-url:https://api.coincap.io/v2}") String baseUrl) {
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;

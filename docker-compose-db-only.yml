@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: crypto-wallet-db
+    environment:
+      POSTGRES_DB: crypto_wallet
+      POSTGRES_USER: crypto_user
+      POSTGRES_PASSWORD: crypto_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crypto_user -d crypto_wallet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crypto-network
+
+volumes:
+  postgres_data:
+
+networks:
+  crypto-network:
+    driver: bridge
