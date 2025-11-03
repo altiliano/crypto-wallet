@@ -4,6 +4,7 @@ import com.crypto.wallet.management.PriceAssets;
 import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.dto.AssetDto;
+import com.crypto.wallet.management.exceptions.InvalidSymbolForAssetException;
 import com.crypto.wallet.management.exceptions.WalletNotFoundException;
 import com.crypto.wallet.management.mapper.AssetMapper;
 import com.crypto.wallet.management.mapper.WalletMapper;
@@ -47,7 +48,7 @@ public class WalletManagementServiceImpl implements WalletManagementService {
 
         PriceAssets priceResponse = coinCapPricingService.getPriceBySymbol(newAsset.getSymbol());
         if (priceResponse.getData() == null || priceResponse.getData().isEmpty() || priceResponse.getData().getFirst() == null) {
-            throw new IllegalArgumentException("Price not found for symbol: " + newAsset.getSymbol());
+            throw new InvalidSymbolForAssetException(newAsset.getSymbol());
         }
 
         BigDecimal value = newAsset.getQuantity().multiply(newAsset.getPrice()).setScale(2, RoundingMode.HALF_UP);
