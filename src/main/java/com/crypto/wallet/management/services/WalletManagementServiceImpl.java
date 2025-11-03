@@ -4,6 +4,7 @@ import com.crypto.wallet.management.PriceAssets;
 import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.dto.AssetDto;
+import com.crypto.wallet.management.exceptions.EmailAlreadyHasWalletAssociatedException;
 import com.crypto.wallet.management.exceptions.InvalidSymbolForAssetException;
 import com.crypto.wallet.management.exceptions.WalletNotFoundException;
 import com.crypto.wallet.management.mapper.AssetMapper;
@@ -30,13 +31,17 @@ public class WalletManagementServiceImpl implements WalletManagementService {
 
     @Override
     public WalletDto create(String email) {
-       Wallet savedWallet = walletRepository.save(
+        if (walletRepository.findByEmail(email).isPresent()) {
+            throw new EmailAlreadyHasWalletAssociatedException(email);
+        }
+
+        Wallet savedWallet = walletRepository.save(
                 Wallet.builder()
                         .email(email)
                         .build()
         );
 
-        return  WalletMapper.INSTANCE.toDto(savedWallet);
+        return WalletMapper.INSTANCE.toDto(savedWallet);
     }
 
     @Override

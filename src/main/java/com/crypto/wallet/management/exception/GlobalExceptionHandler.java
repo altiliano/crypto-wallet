@@ -1,5 +1,6 @@
 package com.crypto.wallet.management.exception;
 
+import com.crypto.wallet.management.exceptions.EmailAlreadyHasWalletAssociatedException;
 import com.crypto.wallet.management.exceptions.InvalidSymbolForAssetException;
 import com.crypto.wallet.management.exceptions.WalletNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,17 @@ public class GlobalExceptionHandler {
         errorResponse.put("message", ex.getMessage());
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(EmailAlreadyHasWalletAssociatedException.class)
+    public ResponseEntity<Map<String, Object>> handleEmailAlreadyHasWallet(EmailAlreadyHasWalletAssociatedException ex) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.CONFLICT.value());
+        errorResponse.put("error", "Wallet Already Exists");
+        errorResponse.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
