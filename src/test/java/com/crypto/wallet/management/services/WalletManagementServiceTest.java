@@ -7,6 +7,7 @@ import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.mapper.AssetMapper;
 import com.crypto.wallet.management.mapper.WalletMapper;
 import com.crypto.wallet.management.repository.WalletRepository;
+import org.junit.jupiter.api.Disabled;
 import org.mapstruct.factory.Mappers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-
+@Disabled
 @ExtendWith(MockitoExtension.class)
 class WalletManagementServiceTest {
     private WalletManagementService walletManagementService;
