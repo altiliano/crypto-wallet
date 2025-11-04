@@ -32,7 +32,7 @@ public class WalletController {
         return walletManagementService.create(request.getEmail());
     }
 
-    @GetMapping("/simulate")
+    @PostMapping("/simulate")
     public ResponseEntity<SimulationResponse> simulateWalletProfit(@RequestBody @Valid SimulationRequest request) {
 
         SimulationResponse response = walletSimulationService.simulateWalletPerformance(request);
