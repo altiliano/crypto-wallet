@@ -1,6 +1,8 @@
 package com.crypto.wallet.management.services;
 
 import com.crypto.wallet.management.PriceAssets;
+import com.crypto.wallet.management.exceptions.InvalidSymbolForAssetException;
+import com.crypto.wallet.management.exceptions.WalletNotFoundException;
 import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.dto.AssetDto;
 import com.crypto.wallet.management.dto.WalletDto;
@@ -22,7 +24,7 @@ import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@Disabled
+
 @ExtendWith(MockitoExtension.class)
 class WalletManagementServiceTest {
     private WalletManagementService walletManagementService;
@@ -135,8 +137,8 @@ class WalletManagementServiceTest {
                 .price(BigDecimal.valueOf(100))
                 .build();
 
-        // Should throw exception when symbol is not found in pricing API
-        assertThrows(IllegalArgumentException.class, () -> {
+
+        assertThrows(InvalidSymbolForAssetException.class, () -> {
             walletManagementService.addAsset(email, invalidAsset);
         }, "Should throw exception when symbol price is not found");
 
@@ -152,7 +154,7 @@ class WalletManagementServiceTest {
                 .build();
 
         // Should throw exception when wallet doesn't exist
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(WalletNotFoundException.class, () -> {
             walletManagementService.addAsset("nonexistent@example.com", asset);
         }, "Should throw exception when wallet is not found");
     }
