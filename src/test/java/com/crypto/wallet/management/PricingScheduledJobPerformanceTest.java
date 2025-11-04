@@ -7,6 +7,8 @@ import com.crypto.wallet.management.repository.entities.Wallet;
 import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.mapper.WalletMapper;
 import com.crypto.wallet.management.mapper.AssetMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -37,6 +40,11 @@ public class PricingScheduledJobPerformanceTest {
 
     @MockitoBean
     private AssetMapper assetMapper;
+
+    @BeforeEach
+    void setUp() {
+        walletRepository.deleteAll();
+    }
 
     @Test
     public void testOptimizedSymbolRetrieval() {
