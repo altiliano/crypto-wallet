@@ -6,7 +6,7 @@ import com.crypto.wallet.management.dto.SimulationRequest;
 import com.crypto.wallet.management.dto.SimulationResponse;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.service.WalletSimulationService;
-import com.crypto.wallet.management.services.WalletManagementService;
+import com.crypto.wallet.management.service.WalletManagementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

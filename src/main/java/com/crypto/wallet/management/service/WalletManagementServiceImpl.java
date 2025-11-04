@@ -1,7 +1,6 @@
-package com.crypto.wallet.management.services;
+package com.crypto.wallet.management.service;
 
 import com.crypto.wallet.management.PriceAssets;
-import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.dto.WalletDto;
 import com.crypto.wallet.management.dto.AssetDto;
 import com.crypto.wallet.management.exceptions.EmailAlreadyHasWalletAssociatedException;

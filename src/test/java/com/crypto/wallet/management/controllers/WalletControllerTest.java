@@ -2,9 +2,8 @@ package com.crypto.wallet.management.controllers;
 
 import com.crypto.wallet.management.dto.*;
 import com.crypto.wallet.management.service.WalletSimulationService;
-import com.crypto.wallet.management.services.WalletManagementService;
+import com.crypto.wallet.management.service.WalletManagementService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
