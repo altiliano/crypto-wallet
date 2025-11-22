@@ -3,6 +3,7 @@ package com.crypto.wallet.management.exception;
 import com.crypto.wallet.management.exceptions.EmailAlreadyHasWalletAssociatedException;
 import com.crypto.wallet.management.exceptions.InvalidSymbolForAssetException;
 import com.crypto.wallet.management.exceptions.WalletNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

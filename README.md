@@ -69,6 +69,27 @@ export COINCAP_API_KEY=your_actual_api_key_here
 
 The application will be available at: http://localhost:8080
 
+## 📚 API Documentation (Swagger)
+
+Interactive API documentation is available via Swagger UI:
+
+### Access Swagger UI
+Once the application is running, visit:
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON**: http://localhost:8080/api-docs
+
+### Features
+- ✅ Interactive API testing
+- ✅ Request/response examples
+- ✅ Schema definitions
+- ✅ Try out endpoints directly from the browser
+
+### Quick Start with Swagger
+1. Start the application (`./gradlew bootRun`)
+2. Open http://localhost:8080/swagger-ui.html in your browser
+3. Explore and test all available endpoints
+4. Use the "Try it out" button to execute requests
+
 ## 🐳 Docker Deployment
 
 ### Full Docker Setup (Database + Application)
