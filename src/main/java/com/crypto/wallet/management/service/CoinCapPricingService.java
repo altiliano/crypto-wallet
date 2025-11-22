@@ -116,4 +116,17 @@ public class CoinCapPricingService implements PricingService {
                     .build();
         }
     }
+
+    public List<PriceAssets> getBatchOfPrice(List<String> symbols) {
+        try {
+            String joinedSymbols = String.join(",", symbols);
+            PriceAssets response = restClient.get()
+                    .uri("/v3/price/bysymbol/{symbols}", joinedSymbols)
+                    .retrieve()
+                    .body(PriceAssets.class);
+            return List.of(response);
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
 }

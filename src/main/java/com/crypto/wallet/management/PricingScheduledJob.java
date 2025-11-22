@@ -3,13 +3,13 @@ package com.crypto.wallet.management;
 import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.repository.AssetRepository;
 import com.crypto.wallet.management.service.AssetPriceUpdateService;
-import org.jetbrains.annotations.NotNull;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Component
 public class PricingScheduledJob implements Job {
@@ -43,6 +44,7 @@ public class PricingScheduledJob implements Job {
 
             List<String> uniqueSymbols = assetRepository.findDistinctSymbols();
 
+
             logger.info("Found {} unique symbols to update: {}", uniqueSymbols.size(), uniqueSymbols);
 
             if (uniqueSymbols.isEmpty()) {
@@ -53,38 +55,27 @@ public class PricingScheduledJob implements Job {
             ExecutorService executorService = Executors.newFixedThreadPool(MAX_THREADS);
 
             try {
-                List<CompletableFuture<Map.Entry<String, String>>> priceFutures = uniqueSymbols.stream()
-                        .map(symbol -> CompletableFuture.supplyAsync(() -> {
-                            try {
-                                logger.debug("Fetching price for symbol: {}", symbol);
-                                PriceAssets priceResponse = coinCapPricingService.getPriceBySymbol(symbol);
+                List<List<String>> batches = partitionSymbols(uniqueSymbols, 100);
+                logger.info("Partitioned {} symbols into {} batches of up to 100 symbols each",
+                        uniqueSymbols.size(), batches.size());
 
-                                if (priceResponse.getData() != null &&
-                                    !priceResponse.getData().isEmpty() &&
-                                    priceResponse.getData().getFirst() != null) {
 
-                                    String priceStr = priceResponse.getData().getFirst();
-                                    logger.debug("Retrieved price for {}: {}", symbol, priceStr);
-                                    return Map.entry(symbol, priceStr);
-                                } else {
-                                    logger.warn("No price data available for symbol: {}", symbol);
-                                    return null;
-                                }
-                            } catch (Exception e) {
-                                logger.error("Error fetching price for symbol: {}", symbol, e);
-                                return null;
-                            }
-                        }, executorService))
+                List<CompletableFuture<Map<String, String>>> batchFutures = batches.stream()
+                        .map(batch -> CompletableFuture.supplyAsync(() ->
+                            processBatch(batch), executorService))
                         .toList();
 
 
-                CompletableFuture<Void> allPrices = waitToFetchPriceToCompleted(priceFutures);
+                CompletableFuture<Void> allBatches = CompletableFuture.allOf(
+                        batchFutures.toArray(new CompletableFuture[0])
+                );
 
-                allPrices.join();
+                allBatches.join();
 
-                Map<String, String> symbolPrices = priceFutures.stream()
+
+                Map<String, String> symbolPrices = batchFutures.stream()
                         .map(CompletableFuture::join)
-                        .filter(entry -> entry != null && entry.getValue() != null)
+                        .flatMap(map -> map.entrySet().stream())
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                 logger.info("Successfully fetched prices for {} symbols", symbolPrices.size());
@@ -111,12 +102,52 @@ public class PricingScheduledJob implements Job {
         }
     }
 
-    @NotNull
-    private static CompletableFuture<Void> waitToFetchPriceToCompleted(List<CompletableFuture<Map.Entry<String, String>>> priceFutures) {
-        return CompletableFuture.allOf(
-                priceFutures.toArray(new CompletableFuture[0])
-        );
+
+    private List<List<String>> partitionSymbols(List<String> symbols, int batchSize) {
+        List<List<String>> batches = new java.util.ArrayList<>();
+        for (int i = 0; i < symbols.size(); i += batchSize) {
+            batches.add(symbols.subList(i, Math.min(i + batchSize, symbols.size())));
+        }
+        return batches;
     }
 
 
+    private Map<String, String> processBatch(List<String> symbols) {
+        try {
+            logger.debug("Fetching prices for batch of {} symbols", symbols.size());
+
+            List<PriceAssets> priceResponses = coinCapPricingService.getBatchOfPrice(symbols);
+
+            if (priceResponses == null || priceResponses.isEmpty() || priceResponses.get(0) == null) {
+                logger.warn("No price data received for batch of {} symbols", symbols.size());
+                return Map.of();
+            }
+
+
+            List<String> prices = priceResponses.get(0).getData();
+
+            int maxIndex = Math.min(symbols.size(), prices.size());
+            Map<String, String> result = IntStream.range(0, maxIndex)
+                    .mapToObj(index -> {
+                        String symbol = symbols.get(index);
+                        String price = prices.get(index);
+                        if (price != null && !price.isEmpty()) {
+                            logger.debug("Retrieved price for {}: {}", symbol, price);
+                            return Map.entry(symbol, price);
+                        } else {
+                            logger.warn("No price available for symbol: {}", symbol);
+                            return null;
+                        }
+                    })
+                    .filter(entry -> entry != null)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            logger.info("Successfully fetched prices for {}/{} symbols in batch", result.size(), symbols.size());
+            return result;
+
+        } catch (Exception e) {
+            logger.error("Error fetching prices for batch of {} symbols", symbols.size(), e);
+            return Map.of();
+        }
+    }
 }
