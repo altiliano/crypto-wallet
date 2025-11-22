@@ -143,7 +143,7 @@ class WalletManagementServiceTest {
             walletManagementService.addAsset(email, invalidAsset);
         }, "Should throw exception when symbol price is not found");
 
-        verify(coinCapPricingService, times(1)).getPriceBySymbol("INVALID");
+        verify(coinCapPricingService, times(1)).getPrice("INVALID");
     }
 
     @Test
@@ -166,6 +166,6 @@ class WalletManagementServiceTest {
                 .data(Collections.singletonList(symbolPrice))
                 .build();
 
-        when(coinCapPricingService.getPriceBySymbol(symbol)).thenReturn(priceResponse);
+        when(coinCapPricingService.getPrice(symbol)).thenReturn(priceResponse);
     }
 }

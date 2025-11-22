@@ -107,8 +107,8 @@ public class PricingScheduledJobTest {
                 .data(List.of("3200.75"))
                 .build();
 
-        when(coinCapPricingService.getPriceBySymbol("BTC")).thenReturn(mockBtcPrice);
-        when(coinCapPricingService.getPriceBySymbol("ETH")).thenReturn(mockEthPrice);
+        when(coinCapPricingService.getPrice("BTC")).thenReturn(mockBtcPrice);
+        when(coinCapPricingService.getPrice("ETH")).thenReturn(mockEthPrice);
 
         JobExecutionContext mockContext = Mockito.mock(JobExecutionContext.class);
 
@@ -116,8 +116,8 @@ public class PricingScheduledJobTest {
         pricingScheduledJob.execute(mockContext);
 
 
-        verify(coinCapPricingService, times(1)).getPriceBySymbol("BTC");
-        verify(coinCapPricingService, times(1)).getPriceBySymbol("ETH");
+        verify(coinCapPricingService, times(1)).getPrice("BTC");
+        verify(coinCapPricingService, times(1)).getPrice("ETH");
 
 
         List<Asset> btcAssets = assetRepository.findBySymbol("BTC");
@@ -154,7 +154,7 @@ public class PricingScheduledJobTest {
 
     @Test
     public void testPricingJobHandlesException() throws JobExecutionException {
-        when(coinCapPricingService.getPriceBySymbol(anyString())).thenThrow(new RuntimeException("API Error"));
+        when(coinCapPricingService.getPrice(anyString())).thenThrow(new RuntimeException("API Error"));
 
 
         List<Asset> originalBtcAssets = assetRepository.findBySymbol("BTC");
@@ -166,7 +166,7 @@ public class PricingScheduledJobTest {
 
         pricingScheduledJob.execute(mockContext);
 
-        verify(coinCapPricingService, atLeastOnce()).getPriceBySymbol(anyString());
+        verify(coinCapPricingService, atLeastOnce()).getPrice(anyString());
 
         List<Asset> btcAssetsAfter = assetRepository.findBySymbol("BTC");
         List<Asset> ethAssetsAfter = assetRepository.findBySymbol("ETH");
@@ -188,7 +188,7 @@ public class PricingScheduledJobTest {
 
         pricingScheduledJob.execute(mockContext);
 
-        verify(coinCapPricingService, never()).getPriceBySymbol(anyString());
+        verify(coinCapPricingService, never()).getPrice(anyString());
 
         assertThat(assetRepository.findAll()).isEmpty();
         assertThat(assetRepository.findDistinctSymbols()).isEmpty();

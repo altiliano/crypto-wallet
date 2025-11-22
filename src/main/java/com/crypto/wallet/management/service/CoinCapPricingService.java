@@ -103,7 +103,7 @@ public class CoinCapPricingService implements PricingService {
         }
     }
 
-    public PriceAssets getPriceBySymbol(String symbols) {
+    public PriceAssets getPrice(String symbols) {
         try {
             return restClient.get()
                     .uri("/v3/price/bysymbol/{symbols}", symbols)
@@ -117,7 +117,7 @@ public class CoinCapPricingService implements PricingService {
         }
     }
 
-    public List<PriceAssets> getBatchOfPrice(List<String> symbols) {
+    public List<PriceAssets> getPrices(List<String> symbols) {
         try {
             String joinedSymbols = String.join(",", symbols);
             PriceAssets response = restClient.get()

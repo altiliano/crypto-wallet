@@ -50,7 +50,7 @@ public class WalletManagementServiceImpl implements WalletManagementService {
             throw new WalletNotFoundException(email);
         }
 
-        PriceAssets priceResponse = coinCapPricingService.getPriceBySymbol(newAsset.getSymbol());
+        PriceAssets priceResponse = coinCapPricingService.getPrice(newAsset.getSymbol());
         if (priceResponse.getData() == null || priceResponse.getData().isEmpty() || priceResponse.getData().getFirst() == null) {
             throw new InvalidSymbolForAssetException(newAsset.getSymbol());
         }

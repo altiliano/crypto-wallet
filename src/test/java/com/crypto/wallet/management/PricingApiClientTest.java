@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 
@@ -34,7 +33,7 @@ class CoinCapPricingServiceTest {
                     .build();
 
             @Override
-            public PriceAssets getPriceBySymbol(String symbols) {
+            public PriceAssets getPrice(String symbols) {
                 return client.get()
                         .uri("price/bysymbol/{symbols}", symbols)
                         .retrieve()
@@ -63,7 +62,7 @@ class CoinCapPricingServiceTest {
                         """));
 
 
-        PriceAssets result = coinCapPricingService.getPriceBySymbol(symbol);
+        PriceAssets result = coinCapPricingService.getPrice(symbol);
 
 
         assertThat(result).isNotNull();
@@ -94,7 +93,7 @@ class CoinCapPricingServiceTest {
                         """));
 
 
-        PriceAssets result = coinCapPricingService.getPriceBySymbol(symbols);
+        PriceAssets result = coinCapPricingService.getPrice(symbols);
 
 
         assertThat(result).isNotNull();
@@ -124,7 +123,7 @@ class CoinCapPricingServiceTest {
                         """));
 
 
-        PriceAssets result = coinCapPricingService.getPriceBySymbol(symbol);
+        PriceAssets result = coinCapPricingService.getPrice(symbol);
 
 
         assertThat(result).isNotNull();

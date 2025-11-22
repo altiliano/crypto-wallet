@@ -116,7 +116,7 @@ public class PricingScheduledJob implements Job {
         try {
             logger.debug("Fetching prices for batch of {} symbols", symbols.size());
 
-            List<PriceAssets> priceResponses = coinCapPricingService.getBatchOfPrice(symbols);
+            List<PriceAssets> priceResponses = coinCapPricingService.getPrices(symbols);
 
             if (priceResponses == null || priceResponses.isEmpty() || priceResponses.get(0) == null) {
                 logger.warn("No price data received for batch of {} symbols", symbols.size());
