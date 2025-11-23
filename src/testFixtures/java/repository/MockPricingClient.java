@@ -16,8 +16,8 @@ public class MockPricingClient implements PricingService {
     );
 
     private final Map<String, BigDecimal> historicalPrices = Map.of(
-        "BTC", new BigDecimal("100.00"),
-        "ETH", new BigDecimal("3602.52"),
+        "BTC", new BigDecimal("94745.00"),
+        "ETH", new BigDecimal("3700.19"),
         "ADA", new BigDecimal("0.30"),
         "SOL", new BigDecimal("140.00")
     );

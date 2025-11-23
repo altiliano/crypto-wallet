@@ -31,7 +31,7 @@ public class CoinCapPricingService implements PricingService {
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restClient.get()
-                    .uri("/v3/price/bysymbol/{symbol}", symbol.toLowerCase())
+                    .uri("/price/bysymbol/{symbol}", symbol.toLowerCase())
                     .retrieve()
                     .body(Map.class);
 
@@ -51,11 +51,11 @@ public class CoinCapPricingService implements PricingService {
     public Optional<BigDecimal> getHistoricalPrice(String symbol, LocalDate date) {
         try {
             long startTimestamp = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
-            long endTimestamp = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+            long endTimestamp = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() ;
             String id = getAssetIdBySymbol(symbol).orElse(null);
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restClient.get()
-                    .uri("/v3/assets/{slug}/history?interval=d1&start={start}&end={end}",
+                    .uri("/assets/{slug}/history?interval=d1&start={start}&end={end}",
                          id, startTimestamp, endTimestamp)
                     .retrieve()
                     .body(Map.class);
@@ -82,7 +82,7 @@ public class CoinCapPricingService implements PricingService {
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restClient.get()
-                    .uri("/v3/assets?search={symbol}", symbol.toLowerCase())
+                    .uri("/assets?search={symbol}", symbol.toLowerCase())
                     .retrieve()
                     .body(Map.class);
 
@@ -106,7 +106,7 @@ public class CoinCapPricingService implements PricingService {
     public PriceAssets getPrice(String symbols) {
         try {
             return restClient.get()
-                    .uri("/v3/price/bysymbol/{symbols}", symbols)
+                    .uri("/price/bysymbol/{symbols}", symbols)
                     .retrieve()
                     .body(PriceAssets.class);
         } catch (Exception e) {
@@ -121,7 +121,7 @@ public class CoinCapPricingService implements PricingService {
         try {
             String joinedSymbols = String.join(",", symbols);
             PriceAssets response = restClient.get()
-                    .uri("/v3/price/bysymbol/{symbols}", joinedSymbols)
+                    .uri("/price/bysymbol/{symbols}", joinedSymbols)
                     .retrieve()
                     .body(PriceAssets.class);
             return List.of(response);

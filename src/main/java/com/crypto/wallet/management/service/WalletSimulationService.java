@@ -23,15 +23,12 @@ public class WalletSimulationService {
     }
 
     public SimulationResponse simulateWalletPerformance(SimulationRequest request) {
-        LocalDate targetDate = request.getEffectiveDate();
 
         List<AssetPerformance> performances = new ArrayList<>();
         BigDecimal totalCurrentValue = BigDecimal.ZERO;
 
         for (SimulationAsset asset : request.getAssets()) {
-            Optional<BigDecimal> currentPrice = targetDate.equals(LocalDate.now())
-                ? pricingService.getCurrentPrice(asset.getSymbol())
-                : pricingService.getHistoricalPrice(asset.getSymbol(), targetDate);
+            Optional<BigDecimal> currentPrice = pricingService.getHistoricalPrice(asset.getSymbol(), request.getDate());
 
             if (currentPrice.isPresent()) {
                 BigDecimal currentValue = currentPrice.get().multiply(asset.getQuantity());
@@ -47,8 +44,9 @@ public class WalletSimulationService {
 
     private BigDecimal calculatePerformance(BigDecimal originalValue, BigDecimal currentValue) {
         return currentValue.subtract(originalValue)
-                .divide(originalValue, 6, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100));
+                .divide(originalValue, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     private SimulationResponse buildSimulationResponse(BigDecimal total, List<AssetPerformance> performances) {

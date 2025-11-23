@@ -8,11 +8,12 @@ import org.junit.jupiter.api.Test;
 import repository.MockPricingClient;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class WalletSimulationIntegrationTest {
+public class WalletSimulationTest {
 
     @Test
     void shouldCompleteWalletSimulationEndToEnd() {
@@ -40,7 +41,7 @@ public class WalletSimulationIntegrationTest {
             new SimulationAsset("ETH", new BigDecimal("4.25"), new BigDecimal("15310.71"))
         );
 
-        SimulationRequest request = new SimulationRequest(assets, null);
+        SimulationRequest request = new SimulationRequest(assets, LocalDate.EPOCH);
 
         return simulationService.simulateWalletPerformance(request);
     }
@@ -49,8 +50,10 @@ public class WalletSimulationIntegrationTest {
     void shouldDemonstrateExampleFromRequirements() {
         SimulationResponse response = getSimulationResponse();
         assertNotNull(response);
-        assertTrue(response.getTotal().compareTo(new BigDecimal("60000")) > 0);
         assertEquals("BTC", response.getBestAsset());
         assertEquals("ETH", response.getWorstAsset());
+        assertEquals(new BigDecimal("35.35"),response.getBestPerformance());
+        assertEquals(new BigDecimal("2.71"),response.getWorstPerformance());
+
     }
 }
