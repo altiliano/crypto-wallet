@@ -117,6 +117,7 @@ public class CoinCapPricingService implements PricingService {
         }
     }
 
+    @Override
     public List<PriceAssets> getPrices(List<String> symbols) {
         try {
             String joinedSymbols = String.join(",", symbols);

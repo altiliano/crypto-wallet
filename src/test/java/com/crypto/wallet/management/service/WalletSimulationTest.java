@@ -1,11 +1,10 @@
-package com.crypto.wallet.management;
+package com.crypto.wallet.management.service;
 
 import com.crypto.wallet.management.dto.SimulationAsset;
 import com.crypto.wallet.management.dto.SimulationRequest;
 import com.crypto.wallet.management.dto.SimulationResponse;
-import com.crypto.wallet.management.service.WalletSimulationService;
 import org.junit.jupiter.api.Test;
-import repository.MockPricingClient;
+import repository.StubPricingClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,7 +32,7 @@ public class WalletSimulationTest {
     }
 
     private static SimulationResponse getSimulationResponse() {
-        MockPricingClient pricingClient = new MockPricingClient();
+        StubPricingClient pricingClient = new StubPricingClient();
         WalletSimulationService simulationService = new WalletSimulationService(pricingClient);
 
         List<SimulationAsset> assets = List.of(
@@ -56,4 +55,25 @@ public class WalletSimulationTest {
         assertEquals(new BigDecimal("2.71"),response.getWorstPerformance());
 
     }
+
+    @Test
+    void shouldHandleSingleAsset() {
+
+        StubPricingClient pricingClient = new StubPricingClient();
+        WalletSimulationService simulationService = new WalletSimulationService(pricingClient);
+
+        List<SimulationAsset> assets = List.of(
+                new SimulationAsset("BTC", new BigDecimal("1"), new BigDecimal("70000"))
+        );
+
+        SimulationRequest request = new SimulationRequest(assets, null);
+
+        SimulationResponse response = simulationService.simulateWalletPerformance(request);
+
+        assertNotNull(response);
+        assertEquals("BTC", response.getBestAsset());
+        assertEquals("BTC", response.getWorstAsset());
+        assertEquals(response.getBestPerformance(), response.getWorstPerformance());
+    }
+
 }

@@ -2,8 +2,6 @@ package com.cryptowallet.job;
 
 import com.crypto.wallet.management.ManagementApplication;
 import com.crypto.wallet.management.PricingScheduledJob;
-import com.crypto.wallet.management.service.CoinCapPricingService;
-import com.crypto.wallet.management.PriceAssets;
 import com.crypto.wallet.management.repository.AssetRepository;
 import com.crypto.wallet.management.repository.WalletRepository;
 import com.crypto.wallet.management.repository.entities.Asset;
@@ -11,6 +9,7 @@ import com.crypto.wallet.management.repository.entities.Wallet;
 import com.crypto.wallet.management.service.AssetPriceUpdateService;
 import com.crypto.wallet.management.mapper.WalletMapper;
 import com.crypto.wallet.management.mapper.AssetMapper;
+import com.crypto.wallet.management.service.PricingService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import repository.InMemoryAssetRepository;
+import repository.StubPricingClient;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -29,15 +29,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ManagementApplication.class)
 public class PricingScheduledJobTest {
 
-    @MockitoBean
-    private CoinCapPricingService coinCapPricingService;
+    private final PricingService coinCapPricingService = new StubPricingClient();
 
     @MockitoBean
     private WalletRepository walletRepository;
@@ -66,11 +63,19 @@ public class PricingScheduledJobTest {
         testWallet.setId(1L);
         testWallet.setEmail("test@example.com");
 
-        Asset btcAsset1 = Asset.builder()
+        Asset btcAsset = Asset.builder()
                 .symbol("BTC")
                 .quantity(new BigDecimal("1.5"))
-                .price(new BigDecimal("50000"))
+                .price(new BigDecimal("2000"))
                 .value(new BigDecimal("75000"))
+                .wallet(testWallet)
+                .build();
+
+        Asset btcAsset2 = Asset.builder()
+                .symbol("BTC")
+                .quantity(new BigDecimal("0.5"))
+                .price(new BigDecimal("2000"))
+                .value(new BigDecimal("25000"))
                 .wallet(testWallet)
                 .build();
 
@@ -82,42 +87,22 @@ public class PricingScheduledJobTest {
                 .wallet(testWallet)
                 .build();
 
-        Asset btcAsset2 = Asset.builder()
-                .symbol("BTC")
+        Asset errorAsset = Asset.builder()
+                .symbol("ERROR")
                 .quantity(new BigDecimal("0.5"))
-                .price(new BigDecimal("50000"))
+                .price(new BigDecimal("1000"))
                 .value(new BigDecimal("25000"))
                 .wallet(testWallet)
                 .build();
 
-        List<Asset> testAssets = Arrays.asList(btcAsset1, ethAsset, btcAsset2);
-
-        assetRepository.saveAll(testAssets);
+        assetRepository.saveAll(Arrays.asList(btcAsset, btcAsset2, ethAsset, errorAsset));
     }
 
     @Test
     public void testPricingJobExecutesSuccessfully() throws JobExecutionException {
-        PriceAssets mockBtcPrice = PriceAssets.builder()
-                .timestamp(System.currentTimeMillis())
-                .data(List.of("55000.50"))
-                .build();
-
-        PriceAssets mockEthPrice = PriceAssets.builder()
-                .timestamp(System.currentTimeMillis())
-                .data(List.of("3200.75"))
-                .build();
-
-        when(coinCapPricingService.getPrice("BTC")).thenReturn(mockBtcPrice);
-        when(coinCapPricingService.getPrice("ETH")).thenReturn(mockEthPrice);
-
         JobExecutionContext mockContext = Mockito.mock(JobExecutionContext.class);
 
-
         pricingScheduledJob.execute(mockContext);
-
-
-        verify(coinCapPricingService, times(1)).getPrice("BTC");
-        verify(coinCapPricingService, times(1)).getPrice("ETH");
 
 
         List<Asset> btcAssets = assetRepository.findBySymbol("BTC");
@@ -127,17 +112,19 @@ public class PricingScheduledJobTest {
         assertThat(ethAssets).hasSize(1);
 
 
+
         for (Asset btcAsset : btcAssets) {
-            assertThat(btcAsset.getPrice()).isEqualByComparingTo(new BigDecimal("55000.50"));
+            assertThat(btcAsset.getPrice()).isEqualByComparingTo(new BigDecimal("50000"));
             assertThat(btcAsset.getValue()).isEqualByComparingTo(
-                btcAsset.getQuantity().multiply(new BigDecimal("55000.50"))
+                    btcAsset.getQuantity().multiply(new BigDecimal("50000"))
             );
         }
 
+
         Asset ethAsset = ethAssets.getFirst();
-        assertThat(ethAsset.getPrice()).isEqualByComparingTo(new BigDecimal("3200.75"));
+        assertThat(ethAsset.getPrice()).isEqualByComparingTo(new BigDecimal("3000"));
         assertThat(ethAsset.getValue()).isEqualByComparingTo(
-            ethAsset.getQuantity().multiply(new BigDecimal("3200.75"))
+                ethAsset.getQuantity().multiply(new BigDecimal("3000"))
         );
     }
 
@@ -154,29 +141,30 @@ public class PricingScheduledJobTest {
 
     @Test
     public void testPricingJobHandlesException() throws JobExecutionException {
-        when(coinCapPricingService.getPrice(anyString())).thenThrow(new RuntimeException("API Error"));
 
-
-        List<Asset> originalBtcAssets = assetRepository.findBySymbol("BTC");
-        List<Asset> originalEthAssets = assetRepository.findBySymbol("ETH");
-        BigDecimal originalBtcPrice = originalBtcAssets.getFirst().getPrice();
-        BigDecimal originalEthPrice = originalEthAssets.getFirst().getPrice();
+        List<Asset> originalErrorAssets = assetRepository.findBySymbol("ERROR");
+        BigDecimal originalErrorPrice = originalErrorAssets.getFirst().getPrice();
 
         JobExecutionContext mockContext = Mockito.mock(JobExecutionContext.class);
 
         pricingScheduledJob.execute(mockContext);
 
-        verify(coinCapPricingService, atLeastOnce()).getPrice(anyString());
+
+        List<Asset> errorAssetsAfter = assetRepository.findBySymbol("ERROR");
+        for (Asset errorAsset : errorAssetsAfter) {
+            assertThat(errorAsset.getPrice()).isEqualByComparingTo(originalErrorPrice);
+            assertThat(errorAsset.getPrice()).isEqualByComparingTo(new BigDecimal("1000"));
+        }
 
         List<Asset> btcAssetsAfter = assetRepository.findBySymbol("BTC");
         List<Asset> ethAssetsAfter = assetRepository.findBySymbol("ETH");
 
         for (Asset btcAsset : btcAssetsAfter) {
-            assertThat(btcAsset.getPrice()).isEqualByComparingTo(originalBtcPrice);
+            assertThat(btcAsset.getPrice()).isEqualByComparingTo(new BigDecimal("50000"));
         }
 
         for (Asset ethAsset : ethAssetsAfter) {
-            assertThat(ethAsset.getPrice()).isEqualByComparingTo(originalEthPrice);
+            assertThat(ethAsset.getPrice()).isEqualByComparingTo(new BigDecimal("3000"));
         }
     }
 
@@ -188,7 +176,6 @@ public class PricingScheduledJobTest {
 
         pricingScheduledJob.execute(mockContext);
 
-        verify(coinCapPricingService, never()).getPrice(anyString());
 
         assertThat(assetRepository.findAll()).isEmpty();
         assertThat(assetRepository.findDistinctSymbols()).isEmpty();

@@ -3,6 +3,7 @@ package com.crypto.wallet.management;
 import com.crypto.wallet.management.service.CoinCapPricingService;
 import com.crypto.wallet.management.repository.AssetRepository;
 import com.crypto.wallet.management.service.AssetPriceUpdateService;
+import com.crypto.wallet.management.service.PricingService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,11 +27,11 @@ public class PricingScheduledJob implements Job {
     private static final Logger logger = LoggerFactory.getLogger(PricingScheduledJob.class);
     private static final int MAX_THREADS = 3;
 
-    private final CoinCapPricingService coinCapPricingService;
+    private final PricingService coinCapPricingService;
     private final AssetRepository assetRepository;
     private final AssetPriceUpdateService assetPriceUpdateService;
 
-    public PricingScheduledJob(CoinCapPricingService coinCapPricingService,
+    public PricingScheduledJob(PricingService coinCapPricingService,
                                AssetRepository assetRepository,
                                AssetPriceUpdateService assetPriceUpdateService) {
         this.coinCapPricingService = coinCapPricingService;
@@ -139,15 +141,48 @@ public class PricingScheduledJob implements Job {
                             return null;
                         }
                     })
-                    .filter(entry -> entry != null)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             logger.info("Successfully fetched prices for {}/{} symbols in batch", result.size(), symbols.size());
             return result;
 
         } catch (Exception e) {
-            logger.error("Error fetching prices for batch of {} symbols", symbols.size(), e);
-            return Map.of();
+            logger.error("Error fetching prices for batch of {} symbols, attempting individual processing", symbols.size(), e);
+            // Fall back to individual processing to avoid one symbol blocking the entire batch
+            return processBatchIndividually(symbols);
         }
+    }
+
+    private Map<String, String> processBatchIndividually(List<String> symbols) {
+        logger.info("Processing {} symbols individually", symbols.size());
+        Map<String, String> result = new java.util.HashMap<>();
+
+        for (String symbol : symbols) {
+            try {
+                List<PriceAssets> priceResponses = coinCapPricingService.getPrices(List.of(symbol));
+
+                if (priceResponses != null && !priceResponses.isEmpty() &&
+                    priceResponses.get(0) != null && priceResponses.get(0).getData() != null &&
+                    !priceResponses.get(0).getData().isEmpty()) {
+
+                    String price = priceResponses.get(0).getData().get(0);
+                    if (price != null && !price.isEmpty()) {
+                        result.put(symbol, price);
+                        logger.debug("Successfully fetched price for {}: {}", symbol, price);
+                    } else {
+                        logger.warn("No price available for symbol: {}", symbol);
+                    }
+                } else {
+                    logger.warn("No price data received for symbol: {}", symbol);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to fetch price for symbol: {}", symbol, e);
+                // Continue processing other symbols
+            }
+        }
+
+        logger.info("Successfully fetched prices for {}/{} symbols individually", result.size(), symbols.size());
+        return result;
     }
 }
